@@ -3,6 +3,8 @@ import { DrawerActions } from 'expo-router/react-navigation';
 import { router, usePathname, useNavigation } from 'expo-router';
 import {
   CalendarDays,
+  CircleUserRound,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -42,12 +44,26 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     ],
   },
   { group: 'CATALOG', items: [{ label: 'Events & Trainings', href: '/events', icon: CalendarDays }] },
+  {
+    group: 'MY ACCOUNT',
+    items: [
+      { label: 'My bookings', href: '/account/bookings', icon: ClipboardList },
+      { label: 'Profile & settings', href: '/account', icon: CircleUserRound },
+    ],
+  },
   { group: 'SETTINGS', items: [{ label: 'Settings', href: '/settings', icon: Settings }] },
 ];
 
-function isActive(pathname: string, href: string) {
+function matches(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** The most specific nav entry for the path, so /account/bookings does not also light up /account. */
+function activeHref(pathname: string) {
+  let best = '';
+  for (const g of NAV) for (const it of g.items) if (matches(pathname, it.href) && it.href.length > best.length) best = it.href;
+  return best;
 }
 
 export function DrawerContent(props: DrawerContentComponentProps) {
@@ -55,6 +71,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const user = useCurrentUser();
+  const current = activeHref(pathname);
 
   const go = (href: string) => {
     props.navigation.closeDrawer();
@@ -74,7 +91,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
               {g.group}
             </Text>
             {g.items.map((it) => {
-              const active = isActive(pathname, it.href);
+              const active = current === it.href;
               const Icon = it.icon;
               return (
                 <Pressable
@@ -103,15 +120,21 @@ export function DrawerContent(props: DrawerContentComponentProps) {
       {user ? (
         <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', padding: space.lg, paddingBottom: insets.bottom + space.md }}>
           <Row>
-            <Avatar name={user.displayName} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#FFFFFF', fontWeight: '700' }} numberOfLines={1}>
-                {user.displayName}
-              </Text>
-              <Text style={{ color: c.sidebarText, fontSize: 12 }} numberOfLines={1}>
-                {user.email} · {ROLE_LABELS[user.role]}
-              </Text>
-            </View>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Open my account"
+              onPress={() => go('/account')}
+              style={({ pressed }) => ({ flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, opacity: pressed ? 0.7 : 1 })}>
+              <Avatar name={user.displayName} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '700' }} numberOfLines={1}>
+                  {user.displayName}
+                </Text>
+                <Text style={{ color: c.sidebarText, fontSize: 12 }} numberOfLines={1}>
+                  {user.email} · {ROLE_LABELS[user.role]}
+                </Text>
+              </View>
+            </Pressable>
             <IconButton
               icon={LogOut}
               label="Sign out"
@@ -143,6 +166,7 @@ export function HeaderRight() {
     <Row gap={0} style={{ marginRight: 4 }}>
       <IconButton icon={Search} label="Search" color={c.text} onPress={() => router.push('/search')} />
       <IconButton icon={isDark ? Sun : Moon} label="Toggle dark mode" color={c.text} onPress={() => setMode(isDark ? 'light' : 'dark')} />
+      <IconButton icon={CircleUserRound} label="My account" color={c.text} onPress={() => router.navigate('/account')} />
     </Row>
   );
 }

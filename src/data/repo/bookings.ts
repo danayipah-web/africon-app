@@ -89,6 +89,8 @@ export async function createBooking(input: BookingForm, opts: SaveOptions = {}) 
     checkedIn: false,
     emailsSent: 0,
     smsSent: 0,
+    assignedTo: me!.id,
+    createdBy: me!.id,
     createdAt: new Date().toISOString(),
   };
   db.set((st) => ({ bookings: [booking, ...st.bookings] }));
@@ -158,6 +160,24 @@ export async function updateBookingStatus(id: string, status: BookingStatus) {
     bookings: st.bookings.map((b) => (b.id === id ? { ...b, status, checkedIn: status === 'completed' ? true : b.checkedIn } : b)),
   }));
   logAudit(me, 'Updated booking status', 'write', 'booking', id, { ref: prev.ref, status: `${prev.status} → ${status}` });
+}
+
+/** Hand follow-up on a booking to a staff member, or clear it with null. */
+export async function assignBooking(id: string, userId: string | null) {
+  const me = currentUser();
+  assertCan(me, 'write:bookings');
+  const s = db.get();
+  const prev = s.bookings.find((b) => b.id === id);
+  if (!prev) throw new Error('Booking not found.');
+  const to = userId ? s.users.find((u) => u.id === userId) : null;
+  if (userId && (!to || to.status !== 'active')) throw new Error('Choose an active team member.');
+  if (prev.assignedTo === userId) return;
+  const from = s.users.find((u) => u.id === prev.assignedTo);
+  db.set((st) => ({ bookings: st.bookings.map((b) => (b.id === id ? { ...b, assignedTo: userId } : b)) }));
+  logAudit(me, userId ? 'Assigned booking' : 'Unassigned booking', 'write', 'booking', id, {
+    ref: prev.ref,
+    assignee: `${from?.email ?? 'nobody'} → ${to?.email ?? 'nobody'}`,
+  });
 }
 
 export async function deleteBooking(id: string) {

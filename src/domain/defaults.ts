@@ -1,5 +1,14 @@
-import type { EventDate, EventItem, Speaker } from '@/domain/types';
+import type { EventDate, EventItem, Speaker, UserPrefs } from '@/domain/types';
 import { newId } from '@/lib/ids';
+
+export const defaultPrefs = (): UserPrefs => ({
+  notifications: { newBooking: true, assignedToMe: true, paymentFailed: true, dailyDigest: false, weeklyReport: true },
+  bookingsScope: 'all',
+  bookingsPerPage: 30,
+});
+
+/** Profile fields added in db v3; spread into every new user. */
+export const blankProfile = () => ({ phone: '', jobTitle: '', bio: '', prefs: defaultPrefs(), passwordChangedAt: null });
 
 export const blankSpeaker = (): Speaker => ({ name: '', title: '', bio: '', company: '', linkedin: '', photoUrl: '' });
 

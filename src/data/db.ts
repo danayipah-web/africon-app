@@ -15,6 +15,7 @@ import type {
   PaymentAdvice,
   Segment,
 } from '@/domain/types';
+import { blankProfile } from '@/domain/defaults';
 
 /**
  * Local, on-device database for the test build. Every screen reads through
@@ -63,7 +64,7 @@ export const emptyDb = (): DbState => ({
 export const useDb = create<DbState>()(
   persist(() => emptyDb(), {
     name: 'africon-admin-db',
-    version: 2,
+    version: 3,
     storage: createJSONStorage(() => AsyncStorage),
     migrate: (persisted, version) => {
       const state = persisted as DbState;
@@ -71,6 +72,11 @@ export const useDb = create<DbState>()(
       if (version < 2 && state?.users) {
         const seeded = new Set(['admin@africon.ai', 'content@africon.ai', 'viewer@africon.ai', 'former.staff@africon.ai']);
         state.users = state.users.map((u) => (seeded.has(u.email) ? { ...u, displayName: 'Daky' } : u));
+      }
+      // v3: user profiles + preferences; bookings get an assignee and creator.
+      if (version < 3 && state?.users) {
+        state.users = state.users.map((u) => ({ ...blankProfile(), ...u }));
+        state.bookings = (state.bookings ?? []).map((b) => ({ ...b, assignedTo: b.assignedTo ?? null, createdBy: b.createdBy ?? null }));
       }
       return state;
     },

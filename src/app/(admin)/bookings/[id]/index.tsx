@@ -9,7 +9,7 @@ import { PageHeader, Screen } from '@/components/layout';
 import { confirm, Sheet, toast, toastError } from '@/components/overlays';
 import { Button, Card, EmptyState, KeyValue, Row, SectionTitle, StatusPill, Txt } from '@/components/ui';
 import { useDb } from '@/data/db';
-import { CapacityError, deleteBooking, transferBooking, updateBookingStatus } from '@/data/repo/bookings';
+import { assignBooking, CapacityError, deleteBooking, transferBooking, updateBookingStatus } from '@/data/repo/bookings';
 import { dateEntryLabel, eventFilterLabel } from '@/domain/eventLabels';
 import type { BookingStatus } from '@/domain/types';
 import { dateTime, eventDateLine, money, shortDate } from '@/lib/format';
@@ -23,6 +23,7 @@ export default function BookingDetail() {
   const me = useCurrentUser();
   const b = useDb((s) => s.bookings.find((x) => x.id === id));
   const events = useDb((s) => s.events);
+  const users = useDb((s) => s.users);
   const audit = useDb((s) => s.audit);
   const contactId = useDb((s) => (b ? s.contacts.find((x) => x.email.toLowerCase() === b.customer.email.toLowerCase())?.id : undefined));
   const [transferOpen, setTransferOpen] = useState(false);
@@ -36,6 +37,7 @@ export default function BookingDetail() {
   const d = e?.dates.find((x) => x.id === b.eventDateId) ?? e?.dates[0];
   const canWrite = can(me, 'write:bookings');
   const targetEvent = events.find((x) => x.id === target);
+  const assignee = users.find((u) => u.id === b.assignedTo);
 
   const onDelete = async () => {
     if (!(await confirm({ title: 'Delete booking?', message: `${b.ref} for ${b.customer.fullName} will be permanently deleted.`, confirmLabel: 'Delete', destructive: true }))) return;
@@ -43,6 +45,15 @@ export default function BookingDetail() {
       await deleteBooking(b.id);
       toast(`${b.ref} deleted`);
       router.back();
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  const onAssign = async (userId: string | null) => {
+    try {
+      await assignBooking(b.id, userId);
+      toast(userId === me?.id ? 'Assigned to you' : userId ? 'Booking reassigned' : 'Booking unassigned');
     } catch (err) {
       toastError(err);
     }
@@ -93,6 +104,20 @@ export default function BookingDetail() {
         <View style={{ marginTop: space.md, gap: 8 }}>
           <Button title="Send Reminder" variant="secondary" disabled accessibilityHint="Send reminder is currently disabled" />
           <Txt v="faint">Send reminder is currently disabled</Txt>
+          {canWrite ? (
+            <Select
+              label="Assigned To"
+              value={b.assignedTo ?? ''}
+              onChange={(v) => onAssign(v || null)}
+              options={[
+                { value: '', label: 'Unassigned' },
+                ...users.filter((u) => u.status === 'active').map((u) => ({ value: u.id, label: u.id === me?.id ? `${u.displayName} (you)` : u.displayName, sub: u.email })),
+              ]}
+            />
+          ) : (
+            <KeyValue label="Assigned To" value={assignee ? `${assignee.displayName} · ${assignee.email}` : 'Unassigned'} />
+          )}
+          {canWrite && b.assignedTo !== me?.id ? <Button small variant="secondary" title="Assign to me" onPress={() => onAssign(me!.id)} /> : null}
           {canWrite ? (
             <Select
               label="Update Status"

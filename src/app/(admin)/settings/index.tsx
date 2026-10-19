@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Settings2, ShieldCheck, Smartphone, type LucideIcon } from 'lucide-react-native';
+import { CircleUserRound, Settings2, ShieldCheck, Smartphone, type LucideIcon } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { signOut, useCurrentUser } from '@/auth/session';
@@ -12,6 +12,7 @@ import { can } from '@/lib/rbac';
 import { space, useTheme, useThemePref } from '@/theme';
 
 const SECTIONS: { title: string; desc: string; icon: LucideIcon; link?: { label: string; sub: string; href: string } }[] = [
+  { title: 'Your account', desc: 'Profile, password, notifications and the bookings you look after', icon: CircleUserRound, link: { label: 'Open my account', sub: 'Profile and preferences', href: '/account' } },
   { title: 'General', desc: 'Taxonomy, defaults, and platform-wide preferences', icon: Settings2, link: { label: 'Event metadata', sub: 'Categories, formats, levels, and tags', href: '/settings/event-metadata' } },
   { title: 'Team & access', desc: 'Invite teammates and manage roles', icon: ShieldCheck, link: { label: 'Manage users', sub: 'Accounts, roles and permissions', href: '/users' } },
 ];
@@ -62,7 +63,7 @@ export default function SettingsHub() {
                 title={s.link.label}
                 variant="secondary"
                 onPress={() => router.push(s.link!.href as never)}
-                disabled={s.link.href === '/settings/event-metadata' ? false : !can(me, 'read:users')}
+                disabled={s.link.href === '/users' ? !can(me, 'read:users') : false}
               />
             ) : null}
           </Card>

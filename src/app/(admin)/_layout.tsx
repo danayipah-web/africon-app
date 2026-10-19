@@ -55,6 +55,7 @@ export default function AdminLayout() {
       <Drawer.Screen name="users" />
       <Drawer.Screen name="events" />
       <Drawer.Screen name="settings" />
+      <Drawer.Screen name="account" />
     </Drawer>
   );
 }

@@ -3,6 +3,20 @@
 export type Role = 'admin' | 'content_manager' | 'viewer';
 export type Capability = 'finance' | 'refunds';
 
+/** Per-user preferences, edited from My account. */
+export interface UserPrefs {
+  notifications: {
+    newBooking: boolean;
+    assignedToMe: boolean;
+    paymentFailed: boolean;
+    dailyDigest: boolean;
+    weeklyReport: boolean;
+  };
+  /** Which list the Bookings screen opens on. */
+  bookingsScope: 'all' | 'mine';
+  bookingsPerPage: 10 | 30 | 50 | 100;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -13,6 +27,11 @@ export interface AdminUser {
   passwordHash: string;
   createdAt: string;
   lastLoginAt: string | null;
+  phone: string;
+  jobTitle: string;
+  bio: string;
+  prefs: UserPrefs;
+  passwordChangedAt: string | null;
 }
 
 export type Money = { amount: number; currency: 'GHS' | 'USD' };
@@ -270,6 +289,10 @@ export interface Booking {
   checkedIn: boolean;
   emailsSent: number;
   smsSent: number;
+  /** Staff user who owns follow-up on this booking. */
+  assignedTo: string | null;
+  /** Staff user who entered the booking; null for website bookings. */
+  createdBy: string | null;
   createdAt: string;
 }
 

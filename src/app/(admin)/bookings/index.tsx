@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useCurrentUser } from '@/auth/session';
 import { Checkbox, DateField, SearchInput, Select } from '@/components/form';
-import { ListRow, PageHeader, Pager, paginate, Screen, Tabs } from '@/components/layout';
+import { FilterChips, ListRow, PageHeader, Pager, paginate, Screen, Tabs } from '@/components/layout';
 import { confirm, toast, toastError } from '@/components/overlays';
 import { Button, Card, EmptyState, IconButton, Row, StatusPill, Txt } from '@/components/ui';
 import { useDb } from '@/data/db';
@@ -24,16 +24,21 @@ import { useTheme } from '@/theme';
 const enumOpts = <T extends string>(all: string, labels: Record<T, string>) => [{ value: 'all', label: all }, ...(Object.keys(labels) as T[]).map((k) => ({ value: k, label: labels[k] }))];
 
 export default function BookingsScreen() {
-  const params = useLocalSearchParams<{ eventId?: string }>();
+  const params = useLocalSearchParams<{ eventId?: string; assignee?: string }>();
   const me = useCurrentUser();
   const { c, tones } = useTheme();
   const bookings = useDb((s) => s.bookings);
   const events = useDb((s) => s.events);
+  const users = useDb((s) => s.users);
   const [tab, setTab] = useState<'all' | 'analytics'>('all');
-  const [f, setF] = useState<BookingFilters>({ ...DEFAULT_BOOKING_FILTERS, eventId: params.eventId ?? 'all' });
+  const [f, setF] = useState<BookingFilters>({
+    ...DEFAULT_BOOKING_FILTERS,
+    eventId: params.eventId ?? 'all',
+    assignee: params.assignee ?? (me?.prefs.bookingsScope === 'mine' ? me.id : 'all'),
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(30);
+  const [perPage, setPerPage] = useState<number>(me?.prefs.bookingsPerPage ?? 30);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Follow ?eventId= when arriving from an event page.
@@ -42,8 +47,23 @@ export default function BookingsScreen() {
     setParamEvent(params.eventId);
     if (params.eventId) setF((x) => ({ ...x, eventId: params.eventId! }));
   }
+  const [paramAssignee, setParamAssignee] = useState(params.assignee);
+  if (params.assignee !== paramAssignee) {
+    setParamAssignee(params.assignee);
+    if (params.assignee) setF((x) => ({ ...x, assignee: params.assignee! }));
+  }
 
   const rows = useMemo(() => filterBookings(bookings, events, f), [bookings, events, f]);
+  const usersById = useMemo(() => new Map(users.map((u) => [u.id, u])), [users]);
+  const scopeCounts = useMemo(
+    () => ({
+      all: bookings.length,
+      mine: bookings.filter((b) => b.assignedTo === me?.id).length,
+      unassigned: bookings.filter((b) => b.assignedTo === null).length,
+    }),
+    [bookings, me?.id],
+  );
+  const scope = f.assignee === 'all' || f.assignee === 'unassigned' ? f.assignee : f.assignee === me?.id ? 'mine' : 'other';
   const dupSet = useMemo(() => duplicateIds(bookings), [bookings]);
   const eventsById = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
 
@@ -135,6 +155,16 @@ export default function BookingsScreen() {
         <BookingsAnalytics />
       ) : (
         <>
+          <FilterChips
+            value={scope}
+            onChange={(v) => upd({ assignee: v === 'mine' ? (me?.id ?? 'all') : v })}
+            chips={[
+              { value: 'all', label: 'All', count: scopeCounts.all },
+              { value: 'mine', label: 'Assigned to me', count: scopeCounts.mine },
+              { value: 'unassigned', label: 'Unassigned', count: scopeCounts.unassigned },
+              ...(scope === 'other' ? [{ value: 'other' as const, label: usersById.get(f.assignee)?.email ?? 'Team member' }] : []),
+            ]}
+          />
           <Card>
             <Select label="Filter by Event" value={f.eventId} onChange={(v) => upd({ eventId: v })} searchable options={[{ value: 'all', label: 'All Events' }, ...events.map((e) => ({ value: e.id, label: eventFilterLabel(e) }))]} />
             <SearchInput value={f.q} onChange={(v) => upd({ q: v })} placeholder="Search by name, email, or booking ref..." />
@@ -147,6 +177,16 @@ export default function BookingsScreen() {
                 <Checkbox label={`⚠ Show Duplicate Registrations Only (${dupSet.size})`} helper="Same email booked onto the same event" checked={f.duplicatesOnly} onChange={(v) => upd({ duplicatesOnly: v })} />
                 <Select label="Status" value={f.status} onChange={(v) => upd({ status: v as BookingFilters['status'] })} options={enumOpts('All Statuses', BOOKING_STATUS_LABELS)} />
                 <Select label="Payment Status" value={f.paymentStatus} onChange={(v) => upd({ paymentStatus: v as BookingFilters['paymentStatus'] })} options={enumOpts('All Payment Status', PAYMENT_STATUS_LABELS)} />
+                <Select
+                  label="Assigned To"
+                  value={f.assignee}
+                  onChange={(v) => upd({ assignee: v })}
+                  options={[
+                    { value: 'all', label: 'Anyone' },
+                    { value: 'unassigned', label: 'Unassigned' },
+                    ...users.filter((u) => u.status === 'active').map((u) => ({ value: u.id, label: u.id === me?.id ? `${u.displayName} (you)` : u.displayName, sub: u.email })),
+                  ]}
+                />
                 <Row>
                   <View style={{ flex: 1 }}>
                     <DateField label="Start Date" value={f.startDate} onChange={(v) => upd({ startDate: v })} />
@@ -230,6 +270,9 @@ export default function BookingsScreen() {
                     ) : null}
                     {dupSet.has(b.id) ? <TriangleAlert size={14} color={tones.amber.fg} /> : null}
                   </Row>
+                  <Txt v="faint" numberOfLines={1}>
+                    {b.assignedTo === me?.id ? 'Assigned to you' : b.assignedTo ? `Assigned to ${usersById.get(b.assignedTo)?.email ?? 'a former team member'}` : 'Unassigned'}
+                  </Txt>
                   <Row style={{ justifyContent: 'space-between' }}>
                     <View>
                       <Txt v="label">{money(b.total, b.currency)}</Txt>

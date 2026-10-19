@@ -11,6 +11,8 @@ export interface BookingFilters {
   startDate: string; // YYYY-MM-DD on createdAt
   endDate: string;
   sort: 'created_desc' | 'created_asc' | 'event_desc' | 'event_asc';
+  /** 'all', 'unassigned', or a staff user id. */
+  assignee: string;
 }
 
 export const DEFAULT_BOOKING_FILTERS: BookingFilters = {
@@ -22,6 +24,7 @@ export const DEFAULT_BOOKING_FILTERS: BookingFilters = {
   startDate: '',
   endDate: '',
   sort: 'created_desc',
+  assignee: 'all',
 };
 
 /** Same email booked onto the same event more than once (spec §5.2). */
@@ -49,6 +52,7 @@ export function filterBookings(bookings: Booking[], events: EventItem[], f: Book
     if (f.eventId !== 'all' && b.eventId !== f.eventId) return false;
     if (f.status !== 'all' && b.status !== f.status) return false;
     if (f.paymentStatus !== 'all' && b.paymentStatus !== f.paymentStatus) return false;
+    if (f.assignee === 'unassigned' ? b.assignedTo !== null : f.assignee !== 'all' && b.assignedTo !== f.assignee) return false;
     if (f.startDate && b.createdAt.slice(0, 10) < f.startDate) return false;
     if (f.endDate && b.createdAt.slice(0, 10) > f.endDate) return false;
     if (dups && !dups.has(b.id)) return false;
@@ -70,6 +74,7 @@ export function activeFilters(f: BookingFilters, events: EventItem[]) {
   if (f.eventId !== 'all') out.event = events.find((e) => e.id === f.eventId)?.title ?? f.eventId;
   if (f.status !== 'all') out.status = f.status;
   if (f.paymentStatus !== 'all') out.payment = f.paymentStatus;
+  if (f.assignee !== 'all') out.assignee = f.assignee;
   if (f.startDate) out.from = f.startDate;
   if (f.endDate) out.to = f.endDate;
   if (f.duplicatesOnly) out.duplicatesOnly = true;

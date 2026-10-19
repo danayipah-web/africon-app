@@ -1,5 +1,6 @@
 import { currentUser, hashPassword, signOut } from '@/auth/session';
 import { db } from '@/data/db';
+import { blankProfile } from '@/domain/defaults';
 import { userCreateSchema } from '@/domain/schemas';
 import type { AdminUser, Capability, Role } from '@/domain/types';
 import { newId } from '@/lib/ids';
@@ -23,6 +24,7 @@ export async function createUser(input: {
   const email = v.email.toLowerCase();
   if (db.get().users.some((u) => u.email.toLowerCase() === email)) throw new Error('A user with this email already exists.');
   const user: AdminUser = {
+    ...blankProfile(),
     id: newId(),
     email,
     displayName: v.displayName,

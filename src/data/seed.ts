@@ -1,4 +1,4 @@
-import { blankEvent, blankEventDate } from '@/domain/defaults';
+import { blankEvent, blankEventDate, blankProfile } from '@/domain/defaults';
 import type {
   AdminUser,
   AuditLog,
@@ -25,9 +25,9 @@ export const DEMO_USER_NAME = 'Daky';
 
 /** Demo sign-ins for the test build (shown on the login screen). */
 export const DEMO_ACCOUNTS = [
-  { email: 'admin@africon.ai', password: 'Admin123!', role: 'admin' as const, displayName: DEMO_USER_NAME },
-  { email: 'content@africon.ai', password: 'Content123!', role: 'content_manager' as const, displayName: DEMO_USER_NAME },
-  { email: 'viewer@africon.ai', password: 'Viewer123!', role: 'viewer' as const, displayName: DEMO_USER_NAME },
+  { email: 'admin@africon.ai', password: 'Admin123!', role: 'admin' as const, displayName: DEMO_USER_NAME, jobTitle: 'Operations Lead' },
+  { email: 'content@africon.ai', password: 'Content123!', role: 'content_manager' as const, displayName: DEMO_USER_NAME, jobTitle: 'Events Coordinator' },
+  { email: 'viewer@africon.ai', password: 'Viewer123!', role: 'viewer' as const, displayName: DEMO_USER_NAME, jobTitle: 'Finance Analyst' },
 ];
 
 function mulberry32(seed: number) {
@@ -234,9 +234,11 @@ export async function buildSeed(hash: (email: string, password: string) => Promi
   const users: AdminUser[] = [];
   for (const [i, a] of DEMO_ACCOUNTS.entries()) {
     users.push({
+      ...blankProfile(),
       id: newId(rand),
       email: a.email,
       displayName: a.displayName,
+      jobTitle: a.jobTitle,
       role: a.role,
       capabilities: a.role === 'admin' ? ['finance', 'refunds'] : [],
       status: 'active',
@@ -246,6 +248,7 @@ export async function buildSeed(hash: (email: string, password: string) => Promi
     });
   }
   users.push({
+    ...blankProfile(),
     id: newId(rand),
     email: 'former.staff@africon.ai',
     displayName: DEMO_USER_NAME,
@@ -397,6 +400,9 @@ export async function buildSeed(hash: (email: string, password: string) => Promi
         checkedIn: status === 'completed',
         emailsSent: 1 + Math.floor(rand() * 5),
         smsSent: Math.floor(rand() * 2),
+        // Spread follow-up across the admin and content manager; leave a third unassigned.
+        assignedTo: k % 3 === 2 ? null : users[k % 3]!.id,
+        createdBy: null,
         createdAt: created,
       };
       bookings.push(b);

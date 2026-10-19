@@ -47,6 +47,8 @@ function booking(p: Partial<Booking> = {}): Booking {
     checkedIn: false,
     emailsSent: 0,
     smsSent: 0,
+    assignedTo: null,
+    createdBy: null,
     createdAt: NOW,
     ...p,
   };
@@ -237,5 +239,50 @@ describe('booking filters', () => {
   });
   it('flags duplicate registrations (same email, same event)', () => {
     expect([...duplicateIds(list)].sort()).toEqual(['x1', 'x3']);
+  });
+});
+
+describe('booking assignment', () => {
+  const { filterBookings, DEFAULT_BOOKING_FILTERS } = require('@/lib/bookingFilters') as typeof import('@/lib/bookingFilters');
+  const { matchesView, sortBySession } = require('@/features/account/myBookings') as typeof import('@/features/account/myBookings');
+  const e = event();
+  const events = new Map([[e.id, e]]);
+  const list = [
+    booking({ id: 'm1', assignedTo: 'me', status: 'pending', paymentStatus: 'pending', eventDateId: 'd1' }),
+    booking({ id: 'm2', assignedTo: 'me', status: 'confirmed', paymentStatus: 'completed', eventDateId: 'd2' }),
+    booking({ id: 'o1', assignedTo: 'other', status: 'pending', paymentStatus: 'pending' }),
+    booking({ id: 'u1', assignedTo: null }),
+  ];
+  it('filters the bookings list by assignee', () => {
+    expect(filterBookings(list, [e], { ...DEFAULT_BOOKING_FILTERS, assignee: 'me' }).map((b) => b.id).sort()).toEqual(['m1', 'm2']);
+    expect(filterBookings(list, [e], { ...DEFAULT_BOOKING_FILTERS, assignee: 'unassigned' }).map((b) => b.id)).toEqual(['u1']);
+    expect(filterBookings(list, [e], DEFAULT_BOOKING_FILTERS)).toHaveLength(4);
+  });
+  it('buckets my bookings', () => {
+    const ids = (v: Parameters<typeof matchesView>[1], today = '2026-10-19') => list.filter((b) => matchesView(b, v, 'me', events, today)).map((b) => b.id);
+    expect(ids('open')).toEqual(['m1', 'm2']);
+    expect(ids('payment')).toEqual(['m1']);
+    expect(ids('upcoming', '2026-11-05')).toEqual(['m2']);
+    expect(ids('past', '2026-11-05')).toEqual(['m1']);
+    expect(ids('unassigned')).toEqual(['u1']);
+  });
+  it('sorts upcoming sessions first, soonest at top', () => {
+    expect(sortBySession(list.slice(0, 2), events, '2026-10-19').map((b) => b.id)).toEqual(['m1', 'm2']);
+    expect(sortBySession(list.slice(0, 2), events, '2026-11-05').map((b) => b.id)).toEqual(['m2', 'm1']);
+  });
+});
+
+describe('account schemas', () => {
+  const { passwordChangeSchema, profileSchema } = require('@/domain/schemas') as typeof import('@/domain/schemas');
+  it('rejects mismatched or unchanged passwords', () => {
+    expect(passwordChangeSchema.safeParse({ currentPassword: 'Old12345!', newPassword: 'New12345!', confirmPassword: 'New12345!' }).success).toBe(true);
+    expect(passwordChangeSchema.safeParse({ currentPassword: 'Old12345!', newPassword: 'New12345!', confirmPassword: 'Nope' }).success).toBe(false);
+    expect(passwordChangeSchema.safeParse({ currentPassword: 'Same1234!', newPassword: 'Same1234!', confirmPassword: 'Same1234!' }).success).toBe(false);
+    expect(passwordChangeSchema.safeParse({ currentPassword: 'x', newPassword: 'short', confirmPassword: 'short' }).success).toBe(false);
+  });
+  it('validates profile phone and name', () => {
+    expect(profileSchema.safeParse({ displayName: 'Ama', jobTitle: '', phone: '+233 24 123 4567', bio: '' }).success).toBe(true);
+    expect(profileSchema.safeParse({ displayName: 'Ama', jobTitle: '', phone: 'call me', bio: '' }).success).toBe(false);
+    expect(profileSchema.safeParse({ displayName: ' ', jobTitle: '', phone: '', bio: '' }).success).toBe(false);
   });
 });

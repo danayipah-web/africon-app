@@ -18,6 +18,31 @@ export const userCreateSchema = z
   })
   .refine((v) => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' });
 
+export const profileSchema = z.object({
+  displayName: z.string().trim().min(2, 'Display name is required').max(60, 'At most 60 characters'),
+  jobTitle: z.string().trim().max(80, 'At most 80 characters'),
+  phone: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || /^\+?[0-9 ()-]{7,20}$/.test(v), 'Enter a valid phone number'),
+  bio: z.string().trim().max(280, 'At most 280 characters'),
+});
+export type ProfileForm = z.infer<typeof profileSchema>;
+
+export const passwordChangeSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: z.string().min(8, 'At least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.newPassword === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' })
+  .refine((v) => v.newPassword !== v.currentPassword, { path: ['newPassword'], message: 'Choose a different password from your current one' });
+
+export const emailChangeSchema = z.object({
+  email,
+  currentPassword: z.string().min(1, 'Enter your current password'),
+});
+
 export const bookingFormSchema = z.object({
   eventId: z.string().min(1, 'Choose an event'),
   eventDateId: z.string().nullable(),
