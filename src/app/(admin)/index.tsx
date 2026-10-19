@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import {
-  BarChart3,
   CalendarDays,
   CalendarPlus,
   Inbox,
@@ -28,8 +27,6 @@ const QUICK: { title: string; desc: string; href: string; icon: LucideIcon }[] =
   { title: 'Create event', desc: 'Add a new event to the calendar', href: '/events/new', icon: CalendarPlus },
   { title: 'Manage bookings', desc: 'Review and manage event bookings', href: '/bookings', icon: Ticket },
   { title: 'Add user', desc: 'Create a new admin user account', href: '/users/new', icon: UserPlus },
-  { title: 'View analytics', desc: 'Check performance metrics and insights', href: '/soon/analytics', icon: BarChart3 },
-  { title: 'Inquiries', desc: 'View and respond to inbound submissions', href: '/soon/inquiries', icon: Inbox },
   { title: 'CRM', desc: 'Customers and leads in one place', href: '/crm', icon: UsersRound },
   { title: 'Send campaign', desc: 'Email or SMS a customer/lead segment', href: '/crm/campaigns', icon: Send },
   { title: 'Settings', desc: 'Configure system settings and preferences', href: '/settings', icon: Settings },

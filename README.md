@@ -2,7 +2,7 @@
 
 Standalone rebuild of the Africon back office (`africon.ai/admin`) as an Expo / React Native app, built from `Africon_Admin_Build_Spec.md`.
 
-This first build covers spec phases 0–5: app shell, sign-in and roles, Dashboard, Users, Events & Trainings, Bookings and CRM (contacts, filter builder, segments, campaigns, import), plus Settings › Event metadata. Every other sidebar item opens a "Coming soon" page.
+This first build covers spec phases 0–5: app shell, sign-in and roles, Dashboard, Users, Events & Trainings, Bookings and CRM (contacts, filter builder, segments, campaigns, import), plus Settings › Event metadata. Modules not in this build are left out of the sidebar.
 
 ## What is real and what is simulated
 

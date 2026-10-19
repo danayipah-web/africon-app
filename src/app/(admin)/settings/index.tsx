@@ -1,22 +1,18 @@
 import { router } from 'expo-router';
-import { Bell, Coins, Mail, Plug, Settings2, ShieldCheck, Smartphone, type LucideIcon } from 'lucide-react-native';
+import { Settings2, ShieldCheck, Smartphone, type LucideIcon } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { signOut, useCurrentUser } from '@/auth/session';
 import { RadioGroup } from '@/components/form';
 import { PageHeader, Screen } from '@/components/layout';
 import { confirm, toast, toastError } from '@/components/overlays';
-import { Button, Card, Pill, Row, Txt } from '@/components/ui';
+import { Button, Card, Row, Txt } from '@/components/ui';
 import { resetDemoData } from '@/data/repo/settings';
 import { can } from '@/lib/rbac';
 import { space, useTheme, useThemePref } from '@/theme';
 
-const SECTIONS: { title: string; desc: string; icon: LucideIcon; soon?: boolean; link?: { label: string; sub: string; href: string } }[] = [
+const SECTIONS: { title: string; desc: string; icon: LucideIcon; link?: { label: string; sub: string; href: string } }[] = [
   { title: 'General', desc: 'Taxonomy, defaults, and platform-wide preferences', icon: Settings2, link: { label: 'Event metadata', sub: 'Categories, formats, levels, and tags', href: '/settings/event-metadata' } },
-  { title: 'Currency', desc: 'Guide prices for visitors outside Ghana. Payments stay in cedis.', icon: Coins, soon: true },
-  { title: 'Notifications', desc: 'Which events trigger admin alerts, and to whom', icon: Bell, soon: true },
-  { title: 'Email templates', desc: 'Transactional emails for bookings and confirmations', icon: Mail, soon: true },
-  { title: 'Integrations', desc: 'Paystack, Mailchimp, mNotify, OpenAI, and more', icon: Plug, soon: true },
   { title: 'Team & access', desc: 'Invite teammates and manage roles', icon: ShieldCheck, link: { label: 'Manage users', sub: 'Accounts, roles and permissions', href: '/users' } },
 ];
 
@@ -57,7 +53,6 @@ export default function SettingsHub() {
               <View style={{ flex: 1 }}>
                 <Row gap={6}>
                   <Txt v="h3">{s.title}</Txt>
-                  {s.soon ? <Pill label="SOON" /> : null}
                 </Row>
                 <Txt v="faint">{s.desc}</Txt>
               </View>

@@ -50,17 +50,6 @@ export default function AdminLayout() {
           headerShadowVisible: false,
         }}
       />
-      <Drawer.Screen
-        name="soon/[slug]"
-        options={{
-          headerShown: true,
-          title: 'Coming soon',
-          headerStyle: { backgroundColor: c.card },
-          headerTintColor: c.text,
-          headerShadowVisible: false,
-          headerRight: () => <HeaderRight />,
-        }}
-      />
       <Drawer.Screen name="bookings" />
       <Drawer.Screen name="crm" />
       <Drawer.Screen name="users" />

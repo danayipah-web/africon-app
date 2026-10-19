@@ -63,8 +63,17 @@ export const emptyDb = (): DbState => ({
 export const useDb = create<DbState>()(
   persist(() => emptyDb(), {
     name: 'africon-admin-db',
-    version: 1,
+    version: 2,
     storage: createJSONStorage(() => AsyncStorage),
+    migrate: (persisted, version) => {
+      const state = persisted as DbState;
+      // v2: every seeded admin user is named "Daky".
+      if (version < 2 && state?.users) {
+        const seeded = new Set(['admin@africon.ai', 'content@africon.ai', 'viewer@africon.ai', 'former.staff@africon.ai']);
+        state.users = state.users.map((u) => (seeded.has(u.email) ? { ...u, displayName: 'Daky' } : u));
+      }
+      return state;
+    },
   }),
 );
 

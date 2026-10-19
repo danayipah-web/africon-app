@@ -2,31 +2,16 @@ import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { DrawerActions } from 'expo-router/react-navigation';
 import { router, usePathname, useNavigation } from 'expo-router';
 import {
-  BarChart3,
-  BookOpen,
-  Building2,
   CalendarDays,
-  ClipboardList,
-  FileText,
-  Handshake,
-  Inbox,
   LayoutDashboard,
-  ListChecks,
   LogOut,
-  MapPin,
   Menu,
-  MessageSquare,
   Moon,
-  Percent,
-  Presentation,
   Search,
   Settings,
-  Sparkles,
-  Star,
   Sun,
   Ticket,
   UserCog,
-  Users,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -43,69 +28,22 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  /** Out-of-scope modules route to a "Coming soon" page (spec §0.6). */
-  soon?: boolean;
 }
 
-/** Sidebar navigation, exact order and grouping from spec §2.2. */
+/** Sidebar navigation: the modules in this build, in spec §2.2 order. */
 export const NAV: { group: string; items: NavItem[] }[] = [
-  {
-    group: 'OVERVIEW',
-    items: [
-      { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-      { label: 'Analytics', href: '/soon/analytics', icon: BarChart3, soon: true },
-    ],
-  },
-  {
-    group: 'SALES & BOOKINGS',
-    items: [
-      { label: 'Bookings', href: '/bookings', icon: Ticket },
-      { label: 'Ghana AI Summit 2026', href: '/soon/ghana-summit-2026', icon: Presentation, soon: true },
-      { label: 'Conferences', href: '/soon/conferences', icon: Building2, soon: true },
-      { label: 'Venue Bookings', href: '/soon/venue-bookings', icon: MapPin, soon: true },
-    ],
-  },
-  {
-    group: 'AIKASA',
-    items: [
-      { label: 'Waitlist', href: '/soon/aikasa-waitlist', icon: ListChecks, soon: true },
-      { label: 'Founding Members', href: '/soon/aikasa-founding', icon: Star, soon: true },
-    ],
-  },
+  { group: 'OVERVIEW', items: [{ label: 'Dashboard', href: '/', icon: LayoutDashboard }] },
+  { group: 'SALES & BOOKINGS', items: [{ label: 'Bookings', href: '/bookings', icon: Ticket }] },
   {
     group: 'PEOPLE',
     items: [
       { label: 'CRM', href: '/crm', icon: UsersRound },
       { label: 'Users', href: '/users', icon: UserCog },
-      { label: 'Affiliates', href: '/soon/affiliates', icon: Handshake, soon: true },
-      { label: 'Facilitators', href: '/soon/facilitators', icon: Users, soon: true },
-      { label: 'Consultations', href: '/soon/consultations', icon: MessageSquare, soon: true },
-      { label: 'Inquiries', href: '/soon/inquiries', icon: Inbox, soon: true },
     ],
   },
-  {
-    group: 'CATALOG',
-    items: [
-      { label: 'Events & Trainings', href: '/events', icon: CalendarDays },
-      { label: 'AI Sprints', href: '/soon/sprints', icon: Sparkles, soon: true },
-      { label: 'Venues', href: '/soon/venues', icon: MapPin, soon: true },
-      { label: 'Discounts', href: '/soon/discounts', icon: Percent, soon: true },
-      { label: 'Project Briefs', href: '/soon/project-briefs', icon: FileText, soon: true },
-    ],
-  },
-  {
-    group: 'CONTENT',
-    items: [
-      { label: 'Content', href: '/soon/content', icon: BookOpen, soon: true },
-      { label: 'Surveys', href: '/soon/surveys', icon: ClipboardList, soon: true },
-    ],
-  },
+  { group: 'CATALOG', items: [{ label: 'Events & Trainings', href: '/events', icon: CalendarDays }] },
   { group: 'SETTINGS', items: [{ label: 'Settings', href: '/settings', icon: Settings }] },
 ];
-
-export const SOON_LABELS: Record<string, string> = Object.fromEntries(
-  NAV.flatMap((g) => g.items.filter((i) => i.soon).map((i) => [i.href.replace('/soon/', ''), i.label])),
-);
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
@@ -156,7 +94,6 @@ export function DrawerContent(props: DrawerContentComponentProps) {
                   })}>
                   <Icon size={18} color={active ? '#FFFFFF' : c.sidebarText} />
                   <Text style={{ color: active ? '#FFFFFF' : c.sidebarText, fontWeight: active ? '700' : '500', flex: 1 }}>{it.label}</Text>
-                  {it.soon ? <Text style={{ color: c.sidebarText, opacity: 0.5, fontSize: 10 }}>SOON</Text> : null}
                 </Pressable>
               );
             })}

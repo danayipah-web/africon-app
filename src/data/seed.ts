@@ -20,11 +20,14 @@ import { emptyGroup } from '@/lib/segments/evaluate';
 import { SEGMENT_TEMPLATES } from '@/lib/segments/templates';
 import type { DbState } from './db';
 
+/** Display name used for every demo admin user. */
+export const DEMO_USER_NAME = 'Daky';
+
 /** Demo sign-ins for the test build (shown on the login screen). */
 export const DEMO_ACCOUNTS = [
-  { email: 'admin@africon.ai', password: 'Admin123!', role: 'admin' as const, displayName: 'Ama Mensah' },
-  { email: 'content@africon.ai', password: 'Content123!', role: 'content_manager' as const, displayName: 'Kojo Asante' },
-  { email: 'viewer@africon.ai', password: 'Viewer123!', role: 'viewer' as const, displayName: 'Efua Boateng' },
+  { email: 'admin@africon.ai', password: 'Admin123!', role: 'admin' as const, displayName: DEMO_USER_NAME },
+  { email: 'content@africon.ai', password: 'Content123!', role: 'content_manager' as const, displayName: DEMO_USER_NAME },
+  { email: 'viewer@africon.ai', password: 'Viewer123!', role: 'viewer' as const, displayName: DEMO_USER_NAME },
 ];
 
 function mulberry32(seed: number) {
@@ -245,7 +248,7 @@ export async function buildSeed(hash: (email: string, password: string) => Promi
   users.push({
     id: newId(rand),
     email: 'former.staff@africon.ai',
-    displayName: 'Yaw Sarpong',
+    displayName: DEMO_USER_NAME,
     role: 'content_manager',
     capabilities: [],
     status: 'disabled',
